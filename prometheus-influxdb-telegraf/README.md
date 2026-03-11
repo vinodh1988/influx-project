@@ -190,6 +190,23 @@ docker compose up -d
 - Confirm Docker socket mount exists in `docker-compose.yml`.
 - Confirm Docker daemon is running.
 - Check permissions and logs: `docker compose logs telegraf`.
+- This project runs Telegraf as `user: "0:0"` to avoid Docker socket permission errors on Ubuntu.
+
+If you still get `telegraf ... is unhealthy`:
+
+```bash
+docker compose logs --tail=200 telegraf
+docker compose logs --tail=200 influxdb
+docker compose down
+docker compose up -d
+```
+
+If logs show auth errors (`401 unauthorized`) after changing `.env` values:
+
+```bash
+docker compose down -v
+docker compose up -d
+```
 
 ### 5.2 Remote Grafana cannot connect to InfluxDB
 
