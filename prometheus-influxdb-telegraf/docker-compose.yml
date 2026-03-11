@@ -1,0 +1,54 @@
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb2
+    restart: unless-stopped
+    ports:
+      - "${INFLUXDB_HTTP_PORT:-8086}:8086"
+    environment:
+      - TZ=${TZ:-UTC}
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_INIT_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_INIT_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_INIT_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_INIT_BUCKET}
+      - DOCKER_INFLUXDB_INIT_RETENTION=${INFLUXDB_INIT_RETENTION}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
+    volumes:
+      - influxdb2-data:/var/lib/influxdb2
+      - influxdb2-config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping", "--host", "http://localhost:8086"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  telegraf:
+    image: telegraf:1.31
+    container_name: telegraf
+    restart: unless-stopped
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    environment:
+      - TZ=${TZ:-UTC}
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
+      - INFLUX_ORG=${INFLUXDB_INIT_ORG}
+      - INFLUX_BUCKET=${INFLUXDB_INIT_BUCKET}
+      - ENVIRONMENT=${ENVIRONMENT:-lab}
+      - ENGINE_HOST=${ENGINE_HOST:-local-docker}
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ETC=/host/etc
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc:/host/etc:ro
+      - /:/hostfs:ro
+
+volumes:
+  influxdb2-data:
+  influxdb2-config:

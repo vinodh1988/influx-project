@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB-Telegraf
+    uid: influxdb-telegraf
+    type: influxdb
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      version: Flux
+      organization: ${INFLUXDB_ORG}
+      defaultBucket: ${INFLUXDB_BUCKET}
+      tlsSkipVerify: true
+    secureJsonData:
+      token: ${INFLUXDB_TOKEN}
+    url: ${INFLUXDB_URL}
